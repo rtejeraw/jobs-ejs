@@ -56,14 +56,9 @@ const auth = require("./middleware/auth");
 const secretWordRouter = require("./routes/secretWord");
 app.use("/secretWord", auth, secretWordRouter);
 
-app.use((req, res) => {
-	res.status(404).send(`That page (${req.url}) was not found.`);
-});
-
-app.use((err, req, res, next) => {
-	res.status(500).send(err.message);
-	console.log(err);
-});
+// 404 handling
+const notFoundMiddleware = require("./middleware/not-found");
+app.use(notFoundMiddleware);
 
 const port = process.env.PORT || 3000;
 
