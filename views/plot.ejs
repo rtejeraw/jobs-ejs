@@ -1,0 +1,17 @@
+<%- include("partials/head.ejs") %> <%- include("partials/header.ejs") %>
+<div>
+	<h2>New Plot</h2>
+
+	<form method="POST" style="display: inline"
+    action="<%= plot && plot._id ? '/plots/update/' + plot._id : '/plots' %>">
+		<label>Unit Type:</label>
+		<select name="unitType">
+			<option value="Cabbage" <%= plot?.unitType === 'Cabbage' ? 'selected' : '' %>>Cabbage</option>
+			<option value="Carrot"  <%= plot?.unitType === 'Carrot'  ? 'selected' : '' %>>Carrot</option>
+		</select>
+		<br />
+		<button><%= !plot ? 'Save' : 'Update' %></button>
+		<input type="hidden" name="_csrf" value="<%= _csrf %>" />
+	</form>
+	<%- include("partials/footer.ejs") %>
+</div>
