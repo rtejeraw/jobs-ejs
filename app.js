@@ -1,13 +1,25 @@
 const express = require("express");
 const app = express();
+require("dotenv").config();
+
+//extra security packages
+const helmet = require("helmet");
+const { xss } = require("express-xss-sanitizer");
+const rateLimiter = require("express-rate-limit");
+
+const cookieParser = require("cookie-parser");
+const csrf = require("host-csrf");
+app.use(cookieParser(process.env.SESSION_SECRET));
+const csrfMiddleware = csrf.csrf();
 
 app.set("view engine", "ejs");
 app.use(require("body-parser").urlencoded({ extended: true }));
 
+app.use(csrfMiddleware);
+
 // connectDB
 const connectDB = require("./db/connect");
 
-require("dotenv").config(); // to load the .env file into the process.env object
 const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
 const url = process.env.MONGO_URI;
@@ -30,7 +42,7 @@ const sessionParms = {
 };
 
 if (app.get("env") === "production") {
-	app.set("trust proxy", 1); // trust first proxy
+	app.set("trust proxy", 1);
 	sessionParms.cookie.secure = true; // serve secure cookies
 }
 
@@ -46,6 +58,22 @@ app.use(passport.session());
 app.use(require("connect-flash")());
 app.use(require("./middleware/storeLocals"));
 
+app.use((req, res, next) => {
+	csrf.getToken(req, res);
+	next();
+});
+
+// extra packages
+app.set("trust proxy", 1); // for rate limiter to work properly behind a proxy
+app.use(
+	rateLimiter({
+		windowMs: 15 * 60 * 1000, // 15 minutes
+		max: 100, // limit each IP to 100 requests per windowMs
+	}),
+);
+app.use(helmet());
+app.use(xss());
+
 app.get("/", (req, res) => {
 	res.render("index");
 });
@@ -55,6 +83,9 @@ app.use("/sessions", require("./routes/sessionRoutes"));
 const auth = require("./middleware/auth");
 const secretWordRouter = require("./routes/secretWord");
 app.use("/secretWord", auth, secretWordRouter);
+
+const plotRouter = require("./routes/plots");
+app.use("/plots", auth, plotRouter);
 
 // 404 handling
 const notFoundMiddleware = require("./middleware/not-found");
