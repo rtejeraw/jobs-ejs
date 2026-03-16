@@ -1,0 +1,35 @@
+  <%- include("partials/head.ejs") %> <%- include("partials/header.ejs")
+		%>
+		<div>
+  <h2>Plots List</h2>
+    <table id="plots-table">
+      <tr id="plots-table-header">
+        <th>Unit Type</th>
+        <th colspan="2"></th>
+      </tr>
+      <% if (plots && plots.length) { %>
+        <% plots.forEach((plot) => { %>
+          <tr>
+            <td><%= plot.unitType %></td>
+            <td><a href="/plots/edit/<%= plot.id %>">
+                <button type="button">edit</button>
+              </a></td>
+            <td>
+              <form method="POST" action="/plots/delete/<%= plot.id%>" style="display: inline">
+                <button>delete</button>
+                <input type="hidden" name="_csrf" value="<%= _csrf %>" />
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      <% } %>
+    </table>
+    <form method="GET" action="/plots/new" style="display: inline">
+                <button>New</button>
+                <input type="hidden" name="_csrf" value="<%= _csrf %>" />
+              </form>
+  </div>
+<%- include("partials/footer.ejs") %>
+
+
+
