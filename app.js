@@ -74,6 +74,15 @@ app.use(
 app.use(helmet());
 app.use(xss());
 
+app.use((req, res, next) => {
+	if (req.path == "/multiply") {
+		res.set("Content-Type", "application/json");
+	} else {
+		res.set("Content-Type", "text/html");
+	}
+	next();
+});
+
 app.get("/", (req, res) => {
 	res.render("index");
 });
@@ -87,15 +96,29 @@ app.use("/secretWord", auth, secretWordRouter);
 const plotRouter = require("./routes/plots");
 app.use("/plots", auth, plotRouter);
 
+app.get("/multiply", (req, res) => {
+	const result = req.query.first * req.query.second;
+	if (result.isNaN) {
+		result = "NaN";
+	} else if (result == null) {
+		result = "null";
+	}
+	res.json({ result: result });
+});
+
 // 404 handling
 const notFoundMiddleware = require("./middleware/not-found");
 app.use(notFoundMiddleware);
 
 const port = process.env.PORT || 3000;
 
-const start = async () => {
+const start = () => {
 	try {
-		await connectDB(process.env.MONGO_URI);
+		let mongoURL = process.env.MONGO_URI;
+		if (process.env.NODE_ENV == "test") {
+			mongoURL = process.env.MONGO_URI_TEST;
+		}
+		connectDB(mongoURL);
 		app.listen(port, () =>
 			console.log(`Server is listening on port ${port}...`),
 		);
@@ -105,3 +128,5 @@ const start = async () => {
 };
 
 start();
+
+module.exports = { app };
